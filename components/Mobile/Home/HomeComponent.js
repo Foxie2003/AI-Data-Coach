@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   StatusBar,
+  TouchableOpacity,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import RoundImage from "../../RoundImage";
@@ -94,7 +95,9 @@ const HomeMobileComponent = () => {
             style={styles.avatar}
             source={require("../../../assets/images/logo.png")}
           /> */}
-          <FontAwesome name="user-circle-o" size={50} color="#FFF" />
+          <TouchableOpacity onPress={() => navigation.navigate("userInfo")}>
+            <FontAwesome name="user-circle-o" size={50} color="#FFF" />
+          </TouchableOpacity>
           <View style={styles.welcome}>
             <Text style={styles.welcomeText}>Xin chào, {userInfo?.name}</Text>
           </View>
