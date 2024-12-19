@@ -16,6 +16,7 @@ import { API } from "../../../constants/API";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 import TokenStorage from "../../../constants/TokenStorage";
+import { toast } from "react-toastify";
 
 const LoginEmailComponent = () => {
   const navigation = useNavigation();
@@ -32,10 +33,12 @@ const LoginEmailComponent = () => {
         await TokenStorage.saveToken(response.data.token);
         console.log("Token đã lưu: ", response.data.token);
         navigation.navigate("Home");
+        toast.success("Đăng nhập thành công!");
       } else {
         console.log("Email hoặc mật khẩu không đúng");
       }
     } catch (error) {
+      toast.error("Email hoặc mật khẩu không đúng ");
       console.log("Lỗi khi đăng nhập: " + error);
     }
   };
@@ -43,11 +46,13 @@ const LoginEmailComponent = () => {
   const handleForgotPassword = async () => {
     try {
       console.log("Gửi email đến: " + email);
+      toast.success("Đang gửi email đến: " + email);
       const response = await axios.post(API.SEND_OTP, {
         email: email,
       });
       if (response.status === 200) {
         console.log("Gửi email thành công");
+        toast.success("Gửi email thành công");
         navigation.navigate("VerifyOTP", {
           resetPasswordInfo: {
             email: email,
@@ -56,6 +61,7 @@ const LoginEmailComponent = () => {
       }
     } catch (error) {
       console.log("Lỗi khi quên mật khẩu: " + error);
+      toast.success("Gửi email thất bại vui lòng thử lại sau");
     }
   };
   return (

@@ -64,6 +64,29 @@ export default function Practice() {
   const [showChat, setShowChat] = useState(!isMobile);
   const [showGreeting, setShowGreeting] = useState(true);
 
+  const fetchSavedCode = async (token, user) => {
+    try {
+      const response = await axios.get(
+        `${API.GET_SAVED_CODE}/${user.userId}/${lessonId}/code1`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.codeExercise) {
+        setCode(response.data.codeExercise?.code);
+        console.log(">>> Check code: ", response.data.codeExercise?.code);
+      }
+    } catch (error) {
+      if (error.status === 404) {
+        console.log("Không tìm thấy code");
+      } else {
+        console.error("Lỗi khi gọi API: ", error);
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchUserInfo = async () => {
       const token = await TokenStorage.getToken();
@@ -80,6 +103,7 @@ export default function Practice() {
         });
         console.log("Dữ liệu nhận được từ API: ", response.data);
         setUserInfo(response.data.user);
+        fetchSavedCode(token, response.data.user);
       } catch (error) {
         console.error("Lỗi khi gọi API: ", error);
         navigation.navigate("Login");
@@ -313,7 +337,11 @@ export default function Practice() {
   const closeModal = () => {
     setIsModalVisible(false);
     if (modalMessage === "Bạn đã hoàn thành bài tập!") {
-      navigation.navigate("Course");
+      if (Platform.OS === "web") {
+        navigation.navigate("Course");
+      } else {
+        navigation.goBack();
+      }
     }
   };
 

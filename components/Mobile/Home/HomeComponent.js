@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { API } from "../../../constants/API";
 import axios from "axios";
 import TokenStorage from "../../../constants/TokenStorage";
+import { FontAwesome } from "@expo/vector-icons";
 
 const HomeMobileComponent = () => {
   const navigation = useNavigation();
@@ -36,7 +37,21 @@ const HomeMobileComponent = () => {
           },
         });
         console.log("Dữ liệu nhận được từ API: ", response.data);
-        setUserInfo(response.data.user);
+        const response2 = await axios.get(
+          API.GET_USER_INFO_BY_EMAIL + response.data.user.email,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUserInfo({
+          userId: response2.data._id,
+          email: response2.data.email,
+          accountType: response2.data.accountType,
+          name: response2.data.name,
+          tel: response2.data.tel,
+        });
       } catch (error) {
         console.error("Lỗi khi gọi API: ", error);
         navigation.navigate("Login");
@@ -75,12 +90,13 @@ const HomeMobileComponent = () => {
       <View style={styles.container}>
         {/* header */}
         <View style={styles.header}>
-          <RoundImage
+          {/* <RoundImage
             style={styles.avatar}
             source={require("../../../assets/images/logo.png")}
-          />
+          /> */}
+          <FontAwesome name="user-circle-o" size={50} color="#FFF" />
           <View style={styles.welcome}>
-            <Text style={styles.welcomeText}>Xin chào, Nguyễn Văn A</Text>
+            <Text style={styles.welcomeText}>Xin chào, {userInfo?.name}</Text>
           </View>
         </View>
 
@@ -177,6 +193,7 @@ const styles = StyleSheet.create({
     padding: 5,
     borderWidth: 1,
     borderColor: "#00000033",
+    borderRadius: 6,
   },
   welcomeText: {
     fontSize: 16,

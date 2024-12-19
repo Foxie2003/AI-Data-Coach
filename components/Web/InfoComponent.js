@@ -26,7 +26,21 @@ function InfoComponent() {
           },
         });
         console.log("Dữ liệu nhận được từ API: ", response.data);
-        setUserInfo(response.data.user);
+        const response2 = await axios.get(
+          API.GET_USER_INFO_BY_EMAIL + response.data.user.email,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setUserInfo({
+          userId: response2.data._id,
+          email: response2.data.email,
+          accountType: response2.data.accountType,
+          name: response2.data.name,
+          tel: response2.data.tel,
+        });
       } catch (error) {
         console.error("Lỗi khi gọi API: ", error);
         navigation.navigate("Login");

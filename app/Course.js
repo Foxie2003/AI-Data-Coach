@@ -1,11 +1,16 @@
-import { useNavigation } from "@react-navigation/native";
 import CourseMain from "../components/Web/Course/CourseMain";
-import { View } from "react-native";
+import Lessons from "../app/(tabs)/lessons";
+import { Platform, View } from "react-native";
 export default function Course() {
-  const navigation = useNavigation();
   return (
-    <View style={{ flex: 1 }}>
-      <CourseMain />
-    </View>
+    <>
+      {Platform.OS === "web" ? (
+        <View style={{ flex: 1 }}>
+          <CourseMain />
+        </View>
+      ) : (
+        <Lessons />
+      )}
+    </>
   );
 }

@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    width: "80%",
+    width: "75%",
     borderColor: "gray",
     borderWidth: 1,
     paddingHorizontal: 10,

@@ -10,18 +10,21 @@ import React, { useEffect, useState } from "react";
 import { theme } from "../constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import TokenStorage from "../constants/TokenStorage";
 import { API } from "../constants/API";
 import axios from "axios";
+import ToastHelper from "../constants/ToastHelper";
 
 const UserInfo = () => {
   const { top } = useSafeAreaInsets();
   const marginTop = top > 0 ? top : 0;
   const navigation = useNavigation();
+  const route = useRoute();
+  const { changePassword } = route?.params || false;
 
   const [userInfo, setUserInfo] = useState(null);
-  const [tab, setTab] = useState([1]);
+  const [tab, setTab] = useState(changePassword ? 2 : 1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
@@ -48,9 +51,17 @@ const UserInfo = () => {
         });
         console.log("Dữ liệu nhận được từ API: ", response.data);
         setUserInfo(response.data.user);
-        setName(response.data.user.name);
-        setEmail(response.data.user.email);
-        setTel(response.data.user.tel);
+        const response2 = await axios.get(
+          API.GET_USER_INFO_BY_EMAIL + response.data.user.email,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setName(response2.data.name);
+        setEmail(response2.data.email);
+        setTel(response2.data.tel);
       } catch (error) {
         console.error("Lỗi khi gọi API: ", error);
         navigation.navigate("Login");
@@ -71,20 +82,73 @@ const UserInfo = () => {
   const validateUserInfo = () => {
     if (!name || !email || !tel) {
       console.log("Vui lòng điền đầy đủ thông tin.");
+      ToastHelper.show("error", "Vui lòng điền đầy đủ thông tin.");
       return false;
     }
     // Kiểm tra định dạng email
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(email)) {
       console.log("Email không hợp lệ.");
+      ToastHelper.show("error", "Email không hợp lệ.");
       return false;
     }
     // Kiểm tra số điện thoại (ví dụ: chỉ cho phép số)
     if (!/^\d+$/.test(tel)) {
       console.log("Số điện thoại không hợp lệ.");
+      ToastHelper.show("error", "Số điện thoại không hợp lệ.");
       return false;
     }
     return true;
+  };
+
+  const validatePassword = () => {
+    if (newPassword.length < 6) {
+      console.log("Mật khẩu mới phải có ít nhất 6 ký tự.");
+      ToastHelper.show("error", "Mật khẩu mới phải có ít nhất 6 ký tự.");
+      return false;
+    }
+    if (newPassword !== reNewPassword) {
+      console.log("Mật khẩu không khớp.");
+      ToastHelper.show("error", "Mật khẩu không khớp.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleChangeInfo = async () => {
+    const token = await TokenStorage.getToken();
+    if (!token) {
+      console.error("Không có token, vui lòng đăng nhập.");
+      setModalVisible(false);
+      navigation.navigate("Login");
+      return;
+    }
+    try {
+      if (!validateUserInfo()) {
+        return;
+      }
+      const response = await axios.put(
+        API.CHANGE_USER_INFO,
+        {
+          userId: userInfo.userId,
+          tel: tel,
+          name: name,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        ToastHelper.show("success", "Thay đổi thông tin thành công");
+      } else {
+        ToastHelper.show("error", "Thay đổi thông tin thất bại");
+      }
+    } catch (error) {
+      ToastHelper.show("error", "Lỗi khi Thay đổi thông tin: " + error);
+      console.log("Lỗi khi Thay đổi thông tin: " + error);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -96,12 +160,8 @@ const UserInfo = () => {
       return;
     }
     try {
-      if (newPassword !== reNewPassword) {
-        console.log("Mật khẩu không khớp");
+      if (!validatePassword()) {
         return;
-      }
-      if (!validateUserInfo()) {
-        return; // Ngừng thực hiện nếu thông tin không hợp lệ
       }
       const response = await axios.post(
         API.CHANGE_PASSWORD,
@@ -117,12 +177,15 @@ const UserInfo = () => {
         }
       );
       if (response.status === 200) {
-        console.log("Đặt lại mật khẩu thành công");
+        console.log("Đổi mật khẩu thành công");
+        ToastHelper.show("success", "Đổi mật khẩu thành công");
       } else {
-        console.log("Đặt lại mật khẩu thất bại");
+        console.log("Đổi mật khẩu thất bại");
+        ToastHelper.show("error", "Đổi mật khẩu thất bại");
       }
     } catch (error) {
-      console.log("Lỗi khi đặt lại mật khẩu: " + error);
+      console.log("Lỗi khi Đổi mật khẩu: " + error);
+      ToastHelper.show("error", "Mật khẩu cũ không đúng");
     }
   };
 
@@ -178,27 +241,34 @@ const UserInfo = () => {
         style={[styles.infoContainer, { display: tab == 1 ? "flex" : "none" }]}
       >
         <Text style={styles.label}>Họ tên</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Họ tên"
-          value={name}
-          onChangeText={(text) => setName(text)}
-        />
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Họ tên"
+            value={name}
+            onChangeText={(text) => setName(text)}
+          />
+        </View>
         <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={(text) => setEmail(text)}
-        />
+        <View style={[styles.inputContainer, { backgroundColor: "#eee" }]}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            editable={false}
+          />
+        </View>
         <Text style={styles.label}>Số điện thoại</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Số điện thoại"
-          value={tel}
-          onChangeText={(text) => setTel(text)}
-        />
-        <TouchableOpacity style={styles.button}>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Số điện thoại"
+            value={tel}
+            onChangeText={(text) => setTel(text)}
+          />
+        </View>
+        <TouchableOpacity onPress={handleChangeInfo} style={styles.button}>
           <Text style={styles.buttonText}>Cập nhật</Text>
         </TouchableOpacity>
       </View>
@@ -307,12 +377,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   input: {
-    borderWidth: 1,
     borderColor: theme.colors.border,
     paddingVertical: 5,
     paddingHorizontal: 10,
     fontSize: 16,
-    borderRadius: 4,
     flex: 1,
   },
   button: {
@@ -335,7 +403,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: 4,
-    paddingRight: 10,
   },
 });
 

@@ -6,6 +6,7 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  Modal,
 } from "react-native";
 import { CheckBox } from "react-native-elements";
 import { API } from "../constants/API";
@@ -50,6 +51,12 @@ export default function Quizz() {
   const [score, setScore] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const route = useRoute();
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  const [isResultModalVisible, setIsResultModalVisible] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
 
   if (!route.params) {
     console.error("route.params is undefined. Check your navigation setup.");
@@ -139,7 +146,13 @@ export default function Quizz() {
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
+    setModalMessage("Bạn có chắc chắn muốn nộp bài không?");
+    setIsModalVisible(true);
+  };
+
+  const confirmSubmit = async () => {
+    setIsModalVisible(false);
     let correctAnswers = 0;
     const updatedQuestions = questions.map((q) => {
       const isCorrect =
@@ -153,6 +166,11 @@ export default function Quizz() {
     setQuestions(updatedQuestions);
     setScore(`${correctAnswers}/${questions.length}`);
     setSubmitted(true);
+
+    setResultMessage(
+      `Bạn đã trả lời đúng ${correctAnswers} trên ${questions.length} câu hỏi.`
+    );
+    setIsResultModalVisible(true);
 
     const token = await TokenStorage.getToken();
     if (!token) {
@@ -213,6 +231,16 @@ export default function Quizz() {
     return styles.option;
   };
 
+  const allQuestionsAnswered = () => {
+    return questions.every((q) => {
+      if (q.type === "single") {
+        return q.userAnswer.length > 0; // Đối với câu hỏi chọn một, cần có câu trả lời
+      } else {
+        return q.userAnswer.length > 0; // Đối với câu hỏi chọn nhiều, cần có ít nhất một câu trả lời
+      }
+    });
+  };
+
   if (!lesson) {
     return <Text>Đang tải...</Text>;
   }
@@ -266,7 +294,7 @@ export default function Quizz() {
               )}`}</Text>
             </View>
           ))}
-          {!submitted && (
+          {allQuestionsAnswered() && !submitted && (
             <TouchableOpacity
               style={styles.submitButton}
               onPress={handleSubmit}
@@ -279,6 +307,51 @@ export default function Quizz() {
           )}
         </View>
       </ScrollView>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>{modalMessage}</Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonCancel]}
+                onPress={() => setIsModalVisible(false)}
+              >
+                <Text style={styles.textStyle}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonConfirm]}
+                onPress={confirmSubmit}
+              >
+                <Text style={styles.textStyle}>Nộp bài</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isResultModalVisible}
+        onRequestClose={() => setIsResultModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>{resultMessage}</Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setIsResultModalVisible(false)}
+            >
+              <Text style={styles.textStyle}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -397,5 +470,59 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     marginBottom: 10,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalView: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "60%",
+  },
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    elevation: 2,
+  },
+  buttonCancel: {
+    backgroundColor: "#f44336",
+    marginRight: 10,
+  },
+  buttonConfirm: {
+    backgroundColor: "#007AFF",
+    marginLeft: 10,
+  },
+  textStyle: {
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  buttonClose: {
+    backgroundColor: "#2196F3",
+    marginTop: 15,
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
   },
 });

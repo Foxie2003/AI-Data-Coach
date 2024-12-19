@@ -14,6 +14,7 @@ import { API } from "../../../constants/API";
 import axios from "axios";
 import { useNavigation } from "expo-router";
 import TokenStorage from "../../../constants/TokenStorage";
+import ToastHelper from "../../../constants/ToastHelper";
 
 const LoginEmailComponent = () => {
   const navigation = useNavigation();
@@ -31,37 +32,27 @@ const LoginEmailComponent = () => {
         console.log("Đăng nhập thành công");
         console.log("Token đã lưu: ", response.data.token);
         navigation.navigate("(tabs)");
+        ToastHelper.show("success", "Đăng nhập thành công");
       } else {
         console.log("Email hoặc mật khẩu không đúng");
+        ToastHelper.show("error", "Email hoặc mật khẩu không đúng");
       }
     } catch (error) {
       console.log("Lỗi khi đăng nhập: " + error);
+      ToastHelper.show("error", "Email hoặc mật khẩu không đúng");
     }
   };
-
-  // const handleForgotPassword = async () => {
-  //   try {
-  //     console.log("Gửi email đến: " + email);
-  //     const response = await axios.post(API.SEND_OTP, {
-  //       email: email,
-  //     });
-  //     if (response.status === 200) {
-  //       console.log("Gửi email thành công");
-  //       navigation.navigate("ForgetPassword");
-  //     }
-  //   } catch (error) {
-  //     console.log("Lỗi khi quên mật khẩu: " + error);
-  //   }
-  // };
 
   const handleForgotPassword = async () => {
     try {
       console.log("Gửi email đến: " + email);
+      ToastHelper.show("success", "Đang gửi email đến: " + email);
       const response = await axios.post(API.SEND_OTP, {
         email: email,
       });
       if (response.status === 200) {
         console.log("Gửi email thành công");
+        ToastHelper.show("success", "Gửi email thành công");
         navigation.navigate("VerifyOTP", {
           resetPasswordInfo: {
             email: email,
@@ -70,6 +61,7 @@ const LoginEmailComponent = () => {
       }
     } catch (error) {
       console.log("Lỗi khi quên mật khẩu: " + error);
+      ToastHelper.show("error", "Gửi email không thành công");
     }
   };
   return (
