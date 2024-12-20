@@ -41,6 +41,7 @@ const LoginEmailComponent = () => {
     } catch (error) {
       console.log("Lỗi khi đăng nhập: " + error);
       ToastHelper.show("error", "Email hoặc mật khẩu không đúng");
+      ToastHelper.show("error", API.ip + error);
     }
   };
 
