@@ -5,7 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/logo.png",
@@ -38,6 +37,7 @@
       "eas": {
         "projectId": "2c1c034e-2a4a-4fb7-930f-55e3e7c227c0"
       }
-    }
+    },
+    "scheme": "myapp"
   }
 }
