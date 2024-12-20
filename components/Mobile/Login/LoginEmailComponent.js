@@ -22,6 +22,7 @@ const LoginEmailComponent = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const handleLogin = async () => {
+    console.log("LOGIN URL: ", API.LOGIN);
     try {
       const response = await axios.post(API.LOGIN, {
         email: email,

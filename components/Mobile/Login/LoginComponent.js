@@ -1,18 +1,30 @@
 import * as React from "react";
-import { Image, Text, StyleSheet, Pressable, View } from "react-native";
-import { useNavigation } from "expo-router";
+import {
+  Image,
+  Text,
+  StyleSheet,
+  Pressable,
+  View,
+  TouchableOpacity,
+  TextInput,
+  Button,
+  Platform,
+} from "react-native";
 import NormalButton from "../../NormalButton";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import TokenStorage from "../../../constants/TokenStorage";
 import ToastHelper from "../../../constants/ToastHelper";
-import { API } from "../../../constants/API";
+import { API, setIp } from "../../../constants/API";
 import axios from "axios";
+import { useNavigation } from "expo-router";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginComponent = () => {
   const navigation = useNavigation();
+  const [showIp, setShowIp] = React.useState(0);
+  const [IP, setIP] = React.useState(API.ip);
 
   React.useEffect(() => {
     const fetchUserInfo = async () => {
@@ -29,7 +41,7 @@ const LoginComponent = () => {
         });
         console.log("Dữ liệu nhận được từ API: ", response.data);
         if (response.status === 200) {
-          navigation.navigate("Home");
+          navigation.navigate("(tabs)");
         }
       } catch (error) {
         console.log("Không có token được xác thực", error);
@@ -99,7 +111,7 @@ const LoginComponent = () => {
           const loginInfo = await loginRes.json();
           console.log("LOGIN: ", loginInfo);
           await TokenStorage.saveToken(loginInfo.token);
-          navigation.navigate("Home");
+          navigation.navigate("(tabs)");
           ToastHelper.show(
             "success",
             "Đăng nhập bằng tài khoản google thành công!"
@@ -172,19 +184,35 @@ const LoginComponent = () => {
           </Text>
         </Pressable>
       </View>
-      <Text style={styles.bottomText}>
-        Bằng việc đăng ký, bạn đồng ý với
-        <Text style={{ color: "#6793e3", fontWeight: "bold" }}>
-          {" "}
-          Điều khoản dịch vụ{" "}
+      {showIp % 5 == 0 && showIp != 0 && (
+        <View>
+          <TextInput
+            value={IP}
+            onChangeText={(text) => setIP(text)}
+            style={{ width: 200, height: 60, borderWidth: 1 }}
+          />
+          <Button title="SET IP" onPress={() => setIp(IP)} />
+        </View>
+      )}
+
+      <TouchableOpacity
+        onPress={() => setShowIp(showIp + 1)}
+        style={styles.bottomTextContainer}
+      >
+        <Text style={styles.bottomText}>
+          Bằng việc đăng ký, bạn đồng ý với
+          <Text style={{ color: "#6793e3", fontWeight: "bold" }}>
+            {" "}
+            Điều khoản dịch vụ{" "}
+          </Text>
+          và
+          <Text style={{ color: "#6793e3", fontWeight: "bold" }}>
+            {" "}
+            Chính sách bảo mật{" "}
+          </Text>
+          của chúng tôi.
         </Text>
-        và
-        <Text style={{ color: "#6793e3", fontWeight: "bold" }}>
-          {" "}
-          Chính sách bảo mật{" "}
-        </Text>
-        của chúng tôi.
-      </Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -204,9 +232,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-  bottomText: {
+  bottomTextContainer: {
     position: "absolute",
     bottom: 20,
+  },
+  bottomText: {
     fontSize: 16,
     margin: 5,
     textAlign: "center",
